@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.organizations",
     "apps.teams",
+    "apps.projects",
+    "apps.tasks",
+    "apps.comments",
+    "apps.attachments",
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -134,3 +138,5 @@ MAILERS = {
     },
 }
 AUTH_USER_MODEL = "accounts.User"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"

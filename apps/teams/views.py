@@ -5,7 +5,7 @@ from .serializers import (
     TeamMembershipSerializer,
     TeamSerializer,
 )
-
+from apps.organizations.permissions import IsOrganizationAdminOrOwner
 
 class TeamListCreateView(generics.ListCreateAPIView):
     serializer_class = TeamSerializer
@@ -23,7 +23,7 @@ class TeamListCreateView(generics.ListCreateAPIView):
 
 class TeamDetailView(generics.RetrieveAPIView):
     serializer_class = TeamSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated,IsOrganizationAdminOrOwner,]
 
     def get_queryset(self):
         return Team.objects.filter(
