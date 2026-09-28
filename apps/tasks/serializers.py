@@ -1,8 +1,8 @@
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.activity.services import log_activity
 from apps.organizations.models import OrganizationMembership
-
 from .models import Task
 
 
@@ -57,6 +57,25 @@ class TaskSerializer(serializers.ModelSerializer):
                 }
             )
 
+        membership = OrganizationMembership.objects.filter(
+            organization=project.organization,
+            user=request.user,
+        ).first()
+
+        if (
+            self.instance is None
+            and membership
+            and membership.role
+            == OrganizationMembership.Role.VIEWER
+        ):
+            raise serializers.ValidationError(
+                {
+                    "project": (
+                        "Viewers cannot create tasks."
+                    )
+                }
+            )
+
         if assignee and not OrganizationMembership.objects.filter(
             organization=project.organization,
             user=assignee,
@@ -72,13 +91,32 @@ class TaskSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        return Task.objects.create(
-            reporter=self.context["request"].user,
+        user = self.context["request"].user
+
+        task = Task.objects.create(
+            reporter=user,
             **validated_data,
         )
 
+        log_activity(
+            organization=task.project.organization,
+            actor=user,
+            action="task.created",
+            entity=task,
+            description=f"Task '{task.title}' was created.",
+            metadata={
+                "status": task.status,
+                "priority": task.priority,
+            },
+        )
+
+        return task
+
     def update(self, instance, validated_data):
+        user = self.context["request"].user
+
         old_status = instance.status
+        old_priority = instance.priority
 
         instance = super().update(
             instance,
@@ -98,5 +136,24 @@ class TaskSerializer(serializers.ModelSerializer):
         ):
             instance.completed_at = None
             instance.save(update_fields=["completed_at"])
+
+        metadata = {}
+
+        if old_status != instance.status:
+            metadata["old_status"] = old_status
+            metadata["new_status"] = instance.status
+
+        if old_priority != instance.priority:
+            metadata["old_priority"] = old_priority
+            metadata["new_priority"] = instance.priority
+
+        log_activity(
+            organization=instance.project.organization,
+            actor=user,
+            action="task.updated",
+            entity=instance,
+            description=f"Task '{instance.title}' was updated.",
+            metadata=metadata,
+        )
 
         return instance

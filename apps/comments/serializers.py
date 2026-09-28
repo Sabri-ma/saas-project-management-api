@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.activity.services import log_activity
 from .models import Comment
 
 
@@ -42,7 +43,24 @@ class CommentSerializer(serializers.ModelSerializer):
         return task
 
     def create(self, validated_data):
-        return Comment.objects.create(
-            author=self.context["request"].user,
+        user = self.context["request"].user
+
+        comment = Comment.objects.create(
+            author=user,
             **validated_data,
         )
+
+        log_activity(
+            organization=comment.task.project.organization,
+            actor=user,
+            action="comment.created",
+            entity=comment,
+            description=(
+                f"Comment added to task '{comment.task.title}'."
+            ),
+            metadata={
+                "task_id": str(comment.task.id),
+            },
+        )
+
+        return comment

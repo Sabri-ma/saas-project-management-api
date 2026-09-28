@@ -3,7 +3,7 @@ from rest_framework import serializers
 from apps.organizations.models import OrganizationMembership
 from apps.organizations.permissions import user_can_manage_organization
 from .models import Project
-
+from apps.activity.services import log_activity
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -97,7 +97,19 @@ class ProjectSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        return Project.objects.create(
-            created_by=self.context["request"].user,
+        user = self.context["request"].user
+
+        project = Project.objects.create(
+            created_by=user,
             **validated_data,
         )
+
+        log_activity(
+            organization=project.organization,
+            actor=user,
+            action="project.created",
+            entity=project,
+            description=f"Project '{project.name}' was created.",
+        )
+
+        return project

@@ -17,25 +17,32 @@ urlpatterns = [
         include("apps.organizations.urls"),
     ),
     path(
-    "api/v1/teams/",
-    include("apps.teams.urls"),
+        "api/v1/teams/",
+        include("apps.teams.urls"),
     ),
     path(
-    "api/v1/projects/",
-    include("apps.projects.urls"),
+        "api/v1/projects/",
+        include("apps.projects.urls"),
     ),
     path(
-    "api/v1/tasks/",
-    include("apps.tasks.urls"),
+        "api/v1/tasks/",
+        include("apps.tasks.urls"),
     ),
     path(
-    "api/v1/comments/",
-    include("apps.comments.urls"),
+        "api/v1/comments/",
+        include("apps.comments.urls"),
     ),
-
     path(
-    "api/v1/attachments/",
-    include("apps.attachments.urls"),
+        "api/v1/attachments/",
+        include("apps.attachments.urls"),
+    ),
+    path(
+        "api/v1/activity/",
+        include("apps.activity.urls"),
+    ),
+    path(
+        "api/v1/notifications/",
+        include("apps.notifications.urls"),
     ),
 ]
 if settings.DEBUG:
